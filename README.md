@@ -1,1 +1,1 @@
-# RHEL-Rocky-9_os_hardening
+# RHEL/Rocky 9 OS Hardening
