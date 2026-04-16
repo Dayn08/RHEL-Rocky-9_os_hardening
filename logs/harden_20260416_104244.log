@@ -1,0 +1,1212 @@
+Hardening run — 20260416_104244
+Host: ansible-server.volare.cc
+
+────────────────────────────────────────────────────────────
+MODULE : 01_gpg_check.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7
+
+[1m── Check 1 — GPG Key Installed ──[0m
+[0;36m[INFO][0m  Audit  : rpm -q --queryformat "%{SUMMARY}
+" gpg-pubkey
+[0;36m[INFO][0m  Source : /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9
+[0;32m[PASS][0m  GPG key for Rocky is present in the RPM database.
+
+[0;36m[INFO][0m  Installed GPG keys:
+        Rocky Enterprise Software Foundation - Release key 2022 <releng@rockylinux.org> public key
+        Fedora (epel9) <epel@fedoraproject.org> public key
+        HashiCorp Security (HashiCorp Package Signing) <security+packaging@hashicorp.com> public key
+        Docker Release (CE rpm) <docker@docker.com> public key
+        Wazuh.com (Wazuh Signing Key) <support@wazuh.com> public key
+        Elasticsearch (Elasticsearch Signing Key) <dev_ops@elasticsearch.org> public key
+        Nodesource Operations <operations@nodesource.com> public key
+        Remi's RPM repository (https://rpms.remirepo.net/) <remi@remirepo.net> public key
+
+[0;36m[INFO][0m  Audit  : Checking key file on disk → /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9
+[0;32m[PASS][0m  GPG key file found : /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9
+
+[0;36m[INFO][0m  Fingerprint (verify against official source):
+        pub   rsa4096 2022-05-09 [SC]
+[0;36m[INFO][0m  Reference URL (RHEL) : https://www.redhat.com/security/team/key
+[0;36m[INFO][0m  Reference URL (Rocky): https://rockylinux.org/keys
+
+[1m── Check 2 — gpgcheck Globally Activated ──[0m
+[0;36m[INFO][0m  Audit  : grep -H '^gpgcheck=1' /etc/yum.conf
+[0;32m[PASS][0m  gpgcheck=1 is set in /etc/yum.conf
+
+[0;36m[INFO][0m  Matched line:
+        /etc/yum.conf:2:gpgcheck=1
+
+
+[1m── Check 2b — Repo Files with gpgcheck=0 (advisory) ──[0m
+[0;36m[INFO][0m  Audit  : grep -rl 'gpgcheck=0' /etc/yum.repos.d/
+[0;32m[PASS][0m  No .repo files found with gpgcheck=0 in /etc/yum.repos.d/
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 01_gpg_check — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 02_ssh.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Check 1 — OpenSSH Server Installed & Enabled ──[0m
+[0;32m[PASS][0m  openssh-server package is installed.
+[0;32m[PASS][0m  sshd service is enabled.
+[0;32m[PASS][0m  sshd service is active.
+
+[1m── Check 2 — SSH Protocol Version ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^Protocol' /etc/ssh/sshd_config
+[0;36m[INFO][0m  Protocol keyword not set (OpenSSH 7+ defaults to 2 only — acceptable).
+[0;32m[PASS][0m  SSHv2 enforced by default in this version of OpenSSH.
+
+[1m── Check 3 — PermitRootLogin Disabled ──[0m
+[0;36m[INFO][0m  Audit: sshd -T | grep -i permitrootlogin
+[0;31m[FAIL][0m  PermitRootLogin is 'yes' — should be 'no'.
+[0;36m[INFO][0m  Remediation: Setting PermitRootLogin no ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  PermitRootLogin set to no.
+
+[1m── Check 4 — PasswordAuthentication ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^PasswordAuthentication' /etc/ssh/sshd_config
+[0;33m[WARN][0m  PasswordAuthentication is 'yes (default)' — consider disabling once keys are deployed.
+[0;36m[INFO][0m  Skipping auto-remediation (may lock you out if keys are not configured).
+
+[1m── Check 5 — PermitEmptyPasswords Disabled ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^PermitEmptyPasswords' /etc/ssh/sshd_config
+[0;32m[PASS][0m  PermitEmptyPasswords is 'no' (default or explicit).
+
+[1m── Check 6 — X11Forwarding Disabled ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^X11Forwarding' /etc/ssh/sshd_config
+[0;31m[FAIL][0m  X11Forwarding is 'yes' — must be 'no'.
+[0;36m[INFO][0m  Remediation: Setting X11Forwarding no ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  X11Forwarding set to no.
+
+[1m── Check 7 — MaxAuthTries <= 4 ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^MaxAuthTries' /etc/ssh/sshd_config
+[0;31m[FAIL][0m  MaxAuthTries is 6 — must be 4 or less.
+[0;36m[INFO][0m  Remediation: Setting MaxAuthTries 4 ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  MaxAuthTries set to 4.
+
+[1m── Check 8 — IgnoreRhosts Enabled ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^IgnoreRhosts' /etc/ssh/sshd_config
+[0;32m[PASS][0m  IgnoreRhosts is 'yes' (default or explicit).
+
+[1m── Check 9 — HostbasedAuthentication Disabled ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^HostbasedAuthentication' /etc/ssh/sshd_config
+[0;32m[PASS][0m  HostbasedAuthentication is 'no'.
+
+[1m── Check 10 — LoginGraceTime <= 60 seconds ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^LoginGraceTime' /etc/ssh/sshd_config
+[0;31m[FAIL][0m  LoginGraceTime is 120 — must be 60 or less.
+[0;36m[INFO][0m  Remediation: Setting LoginGraceTime 60 ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  LoginGraceTime set to 60.
+
+[1m── Check 11 — Client Idle Timeout (ClientAlive) ──[0m
+[0;36m[INFO][0m  Audit: grep -i 'ClientAlive' /etc/ssh/sshd_config
+[0;31m[FAIL][0m  ClientAliveInterval is '0' — recommend setting to 300 (5 min).
+[0;36m[INFO][0m  Remediation: Setting ClientAliveInterval 300 ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  ClientAliveInterval set to 300.
+[0;32m[PASS][0m  ClientAliveCountMax is 3.
+
+[1m── Check 12 — AllowTcpForwarding Disabled ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^AllowTcpForwarding' /etc/ssh/sshd_config
+[0;32m[PASS][0m  AllowTcpForwarding is 'no'.
+
+[1m── Check 13 — Warning Banner Configured ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^Banner' /etc/ssh/sshd_config
+[0;31m[FAIL][0m  Banner is 'not set' or /etc/issue.net is empty.
+[0;36m[INFO][0m  Remediation: Writing default banner to /etc/issue.net ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  Banner file created and Banner set to /etc/issue.net.
+
+[1m── Check 14 — Approved Ciphers ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^Ciphers' /etc/ssh/sshd_config
+[0;33m[WARN][0m  Ciphers not explicitly set — applying approved list as best practice.
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  Ciphers set to approved list.
+
+[1m── Check 15 — Approved MACs ──[0m
+[0;36m[INFO][0m  Audit: grep -i '^MACs' /etc/ssh/sshd_config
+[0;33m[WARN][0m  MACs not explicitly set — applying approved list as best practice.
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.*
+[0;32m[PASS][0m  MACs set to approved list.
+
+[1m── Applying Configuration ──[0m
+[0;32m[PASS][0m  sshd configuration reloaded successfully.
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 02_ssh — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 03_aide.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Check 1 — AIDE Package Installed ──[0m
+[0;36m[INFO][0m  Audit  : rpm -q aide
+[0;31m[FAIL][0m  AIDE package is NOT installed.
+[0;36m[INFO][0m  Remediation: Installing AIDE via dnf ...
+[0;32m[PASS][0m  AIDE installed successfully (version 0.16).
+
+[1m── Check 2 — AIDE Configuration File ──[0m
+[0;36m[INFO][0m  Audit  : test -f /etc/aide.conf
+[0;32m[PASS][0m  AIDE configuration file found : /etc/aide.conf
+[0;36m[INFO][0m  Monitored path rules in config : 136
+[0;36m[INFO][0m  Permissions set on /etc/aide.conf → 600 root:root
+
+[1m── Check 3 — AIDE Database Initialised ──[0m
+[0;36m[INFO][0m  Audit  : test -f /var/lib/aide/aide.db.gz
+[0;31m[FAIL][0m  AIDE database NOT found : /var/lib/aide/aide.db.gz
+[0;36m[INFO][0m  Remediation: Initialising AIDE database (this may take several minutes) ...
+[0;33m[WARN][0m  Please do NOT interrupt — incomplete initialisation produces a corrupt database.
+
+Start timestamp: 2026-04-16 10:42:51 +0800 (AIDE 0.16)
+AIDE initialized database at /var/lib/aide/aide.db.new.gz
+
+Number of entries:	132655
+
+---------------------------------------------------
+The attributes of the (uncompressed) database(s):
+---------------------------------------------------
+
+/var/lib/aide/aide.db.new.gz
+  MD5      : 0UIh6401Wp7Ropkb+kGFQw==
+  SHA1     : 0/G+e0Itjh7gYIbj6HTwAY4j/aE=
+  RMD160   : r+vNnu9z/rytsB6xmXA3XoQHw2c=
+  TIGER    : KITVI63K/cFveqd1WJNzTPi1Q9ZgV8kD
+  SHA256   : LpmiBxjhPlSXxysiCqat4DcFxvseYkwh
+             QZhtjWMpboA=
+  SHA512   : 81Tb9iiG90LFiDGOS62r4Q9ZOpxV5xFO
+             dp+kPRdJqVzFe6Z+/jRNiHUtJ7pjooYh
+             Kb+KoFAp8Vwe5XJKH7BIKg==
+
+
+End timestamp: 2026-04-16 10:50:37 +0800 (run time: 7m 46s)
+
+[0;32m[PASS][0m  AIDE database initialised : /var/lib/aide/aide.db.gz (6.4M)
+
+[1m── Check 4 — AIDE Cron Job (0 5 * * *) ──[0m
+[0;36m[INFO][0m  Audit  : cat /etc/cron.d/aide
+[0;36m[INFO][0m  Expect : 0 5 * * * root /usr/sbin/aide --check
+[0;36m[INFO][0m  Cron file not found : /etc/cron.d/aide — will create it.
+[0;36m[INFO][0m  Remediation: Writing cron job to /etc/cron.d/aide ...
+[0;32m[PASS][0m  Cron job created successfully in /etc/cron.d/aide
+
+[1m── Check 5 — Cron File Permissions ──[0m
+[0;36m[INFO][0m  Audit  : stat -c '%a %U %G' /etc/cron.d/aide
+[0;32m[PASS][0m  Cron file permissions : 644 root:root
+[0;36m[INFO][0m  Log directory permissions secured : /var/log/aide → 700 root:root
+
+[1m── Check 6 — AIDE Binary Integrity ──[0m
+[0;36m[INFO][0m  Audit  : rpm -V aide
+[0;32m[PASS][0m  rpm -V aide — binary and files verified against RPM database (no changes).
+
+[1m── Cron Job Summary ──[0m
+
+  [1mSchedule  :[0m [0;36m0 5 * * *[0m  (daily at 05:00)
+  [1mRun as    :[0m root
+  [1mCommand   :[0m /usr/sbin/aide --check
+  [1mCron file :[0m /etc/cron.d/aide
+  [1mLog output:[0m /var/log/aide/aide_check.log
+  [1mDB path   :[0m /var/lib/aide/aide.db.gz
+
+[0;36m[INFO][0m  To run a manual integrity check now:
+        sudo aide --check --config=/etc/aide.conf
+
+[0;36m[INFO][0m  To update the database after planned system changes:
+        sudo aide --update --config=/etc/aide.conf
+        sudo mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 03_aide — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 04_remove_packages.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m       Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Starting Package Removal Audit ──[0m
+[0;36m[INFO][0m       Packages to audit : 16
+
+
+[1m── SELinux Troubleshoot Daemon (setroubleshoot) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q setroubleshoot
+[2m[NOT FOUND][0m  setroubleshoot is not installed — no action needed.
+
+
+[1m── SELinux Troubleshoot Server (setroubleshoot-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q setroubleshoot-server
+[2m[NOT FOUND][0m  setroubleshoot-server is not installed — no action needed.
+
+
+[1m── MCS Translation Service (mcstrans) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q mcstrans
+[2m[NOT FOUND][0m  mcstrans is not installed — no action needed.
+
+
+[1m── Telnet Server (telnet-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q telnet-server
+[2m[NOT FOUND][0m  telnet-server is not installed — no action needed.
+
+
+[1m── Telnet Client (telnet) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q telnet
+[2m[NOT FOUND][0m  telnet is not installed — no action needed.
+
+
+[1m── RSH Server (rsh-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q rsh-server
+[2m[NOT FOUND][0m  rsh-server is not installed — no action needed.
+
+
+[1m── RSH Client (rsh) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q rsh
+[2m[NOT FOUND][0m  rsh is not installed — no action needed.
+
+
+[1m── NIS Client (ypbind) (ypbind) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q ypbind
+[2m[NOT FOUND][0m  ypbind is not installed — no action needed.
+
+
+[1m── NIS Server (ypserv) (ypserv) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q ypserv
+[2m[NOT FOUND][0m  ypserv is not installed — no action needed.
+
+
+[1m── TFTP Client (tftp) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q tftp
+[2m[NOT FOUND][0m  tftp is not installed — no action needed.
+
+
+[1m── TFTP Server (tftp-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q tftp-server
+[2m[NOT FOUND][0m  tftp-server is not installed — no action needed.
+
+
+[1m── Talk Client (talk) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q talk
+[2m[NOT FOUND][0m  talk is not installed — no action needed.
+
+
+[1m── Talk Server (talk-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q talk-server
+[2m[NOT FOUND][0m  talk-server is not installed — no action needed.
+
+
+[1m── xinetd Super-Server (xinetd) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q xinetd
+[2m[NOT FOUND][0m  xinetd is not installed — no action needed.
+
+
+[1m── X Window System Server (xorg-x11-server-Xorg) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q xorg-x11-server-Xorg
+[2m[NOT FOUND][0m  xorg-x11-server-Xorg is not installed — no action needed.
+
+
+[1m── DHCP Server (dhcp-server) ──[0m
+[0;36m[INFO][0m       Audit : rpm -q dhcp-server
+[2m[NOT FOUND][0m  dhcp-server is not installed — no action needed.
+
+[1m── Legacy inetd / xinetd Service Check ──[0m
+[0;36m[INFO][0m       Audit : chkconfig --list (if available)
+[0;32m[PASS][0m       No legacy inetd/xinetd services detected.
+
+[1m── X Window System — Graphical Target ──[0m
+[0;36m[INFO][0m       Audit : systemctl get-default
+[0;36m[INFO][0m       Current default target : multi-user.target
+[0;32m[PASS][0m       Default target is multi-user.target (correct for a server).
+
+
+[1m╔══════════════════════════════════════════════════════════════╗[0m
+[1m║          PACKAGE REMOVAL SUMMARY                            ║[0m
+[1m╠══════════════════════════════════════════╦═══════════════════╣[0m
+[1m║  PACKAGE                                  ║ STATUS            ║[0m
+[1m╠══════════════════════════════════════════╬═══════════════════╣[0m
+║  SELinux Troubleshoot Daemon              ║ ALREADY_ABSENT    [0m ║
+║  SELinux Troubleshoot Server              ║ ALREADY_ABSENT    [0m ║
+║  MCS Translation Service                  ║ ALREADY_ABSENT    [0m ║
+║  Telnet Server                            ║ ALREADY_ABSENT    [0m ║
+║  Telnet Client                            ║ ALREADY_ABSENT    [0m ║
+║  RSH Server                               ║ ALREADY_ABSENT    [0m ║
+║  RSH Client                               ║ ALREADY_ABSENT    [0m ║
+║  NIS Client (ypbind)                      ║ ALREADY_ABSENT    [0m ║
+║  NIS Server (ypserv)                      ║ ALREADY_ABSENT    [0m ║
+║  TFTP Client                              ║ ALREADY_ABSENT    [0m ║
+║  TFTP Server                              ║ ALREADY_ABSENT    [0m ║
+║  Talk Client                              ║ ALREADY_ABSENT    [0m ║
+║  Talk Server                              ║ ALREADY_ABSENT    [0m ║
+║  xinetd Super-Server                      ║ ALREADY_ABSENT    [0m ║
+║  X Window System Server                   ║ ALREADY_ABSENT    [0m ║
+║  DHCP Server                              ║ ALREADY_ABSENT    [0m ║
+[1m╠══════════════════════════════════════════╩═══════════════════╣[0m
+[1m║  Total packages audited : 16                                    ║[0m
+[0;32m[1m║  Already absent         : 16                                    ║[0m
+[0;32m[1m║  Removed this run       : 0                                     ║[0m
+║  Failed to remove       : 0                                     ║
+[1m╚══════════════════════════════════════════════════════════════╝[0m
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m       Module 04_remove_packages — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 05_restrict_core_dumps.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Check 1 — Hard Core Limit in limits.conf ──[0m
+[0;36m[INFO][0m  Audit  : grep "hard core" /etc/security/limits.conf
+[0;36m[INFO][0m  Expect : * hard core 0
+
+[0;31m[FAIL][0m  "* hard core 0" NOT found in /etc/security/limits.conf
+[0;36m[INFO][0m  Remediation: Adding/updating hard core limit ...
+[0;36m[INFO][0m    Backup created : /etc/security/limits.conf.bak.20260416105039
+[0;32m[PASS][0m  Remediation successful — "* hard core 0" set in /etc/security/limits.conf
+
+[1m── Check 2 — limits.d Drop-in Override Check ──[0m
+[0;36m[INFO][0m  Audit  : grep -rE 'hard core' /etc/security/limits.d/
+[0;32m[PASS][0m  No conflicting hard core overrides found in /etc/security/limits.d/
+
+[1m── Check 3 — sysctl fs.suid_dumpable (Runtime) ──[0m
+[0;36m[INFO][0m  Audit  : sysctl fs.suid_dumpable
+[0;36m[INFO][0m  Expect : fs.suid_dumpable = 0
+[0;36m[INFO][0m  Note   : CIS benchmark shows value 2 as the non-compliant example.
+
+[0;36m[INFO][0m  Current runtime value : fs.suid_dumpable = 2
+[0;31m[FAIL][0m  fs.suid_dumpable = 2 — suidsafe mode, core written to cwd (insecure).
+[0;36m[INFO][0m  This is the non-compliant state shown in the CIS audit example.
+[0;36m[INFO][0m  Remediation: Setting fs.suid_dumpable = 0 at runtime ...
+[0;32m[PASS][0m  Runtime value set to 0.
+
+[1m── Check 4 — fs.suid_dumpable Persisted (sysctl.d) ──[0m
+[0;36m[INFO][0m  Audit  : grep -r 'fs.suid_dumpable' /etc/sysctl.conf /etc/sysctl.d/
+
+[0;31m[FAIL][0m  fs.suid_dumpable not persisted — will revert to default on reboot.
+[0;36m[INFO][0m  Remediation: Writing /etc/sysctl.d/60-coredump-hardening.conf ...
+[0;32m[PASS][0m  Persisted to /etc/sysctl.d/60-coredump-hardening.conf and applied.
+
+[1m── Check 5 — systemd-coredump Service ──[0m
+[0;36m[INFO][0m  Audit  : systemctl is-active systemd-coredump.socket
+
+[0;36m[INFO][0m  systemd-coredump.socket : active=active, enabled=static
+[0;31m[FAIL][0m  systemd-coredump.socket is active or enabled — should be disabled.
+[0;36m[INFO][0m  Remediation: Stopping and masking systemd-coredump ...
+[0;32m[PASS][0m  systemd-coredump.socket stopped, disabled, and masked.
+
+[1m── Check 6 — systemd coredump.conf Configuration ──[0m
+[0;36m[INFO][0m  Audit  : grep -E 'Storage|ProcessSizeMax' /etc/systemd/coredump.conf
+[0;36m[INFO][0m  Expect : Storage=none, ProcessSizeMax=0
+
+[0;36m[INFO][0m  Current Storage       : 'not set (defaults to external)'
+[0;36m[INFO][0m  Current ProcessSizeMax: '1G'
+
+[0;31m[FAIL][0m  Storage is 'not set' — should be 'none'.
+[0;31m[FAIL][0m  ProcessSizeMax is '1G' — should be '0'.
+[0;36m[INFO][0m  Remediation: Writing coredump drop-in configuration ...
+[0;32m[PASS][0m  Coredump drop-in written to /etc/systemd/coredump.conf.d/99-disable-coredump.conf
+[0;32m[PASS][0m  systemd daemon reloaded.
+
+[1m── Final State Verification ──[0m
+
+  [1mfs.suid_dumpable (runtime)              [0m 0
+  [1mlimits.conf hard core                   [0m * hard core 0
+  [1mlimits.conf soft core                   [0m * soft core 0
+  [1msysctl.d persistence file               [0m /etc/sysctl.d/60-coredump-hardening.conf
+
+[0;32m[PASS][0m  fs.suid_dumpable runtime = 0 ✓
+[0;32m[PASS][0m  * hard core 0 confirmed in /etc/security/limits.conf ✓
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 05_restrict_core_dumps — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 06_aslr.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+  [1mASLR value reference:[0m
+  [2m0     Disabled             No randomisation — exploits work reliably[0m
+  [2m1     Partial ASLR         Stack/mmap randomised, heap is NOT[0m
+  [0;32m[1m2     Full ASLR (CIS)      Stack + heap + mmap + libs all randomised[0m
+
+
+[1m── Check 1 — Runtime ASLR Value ──[0m
+[0;36m[INFO][0m  Audit  : sysctl kernel.randomize_va_space
+[0;36m[INFO][0m  Expect : kernel.randomize_va_space = 2
+
+[0;36m[INFO][0m  Current runtime value : kernel.randomize_va_space = 2
+
+[0;32m[PASS][0m  ASLR is fully enabled — kernel.randomize_va_space = 2
+
+[1m── Check 2 — Persistent ASLR Configuration ──[0m
+[0;36m[INFO][0m  Audit  : grep -r 'kernel.randomize_va_space' /etc/sysctl.conf /etc/sysctl.d/
+
+[0;31m[FAIL][0m  kernel.randomize_va_space not found in any sysctl config — will revert on reboot.
+[0;36m[INFO][0m  Remediation: Writing /etc/sysctl.d/61-aslr-hardening.conf ...
+[0;32m[PASS][0m  Persisted to /etc/sysctl.d/61-aslr-hardening.conf and applied.
+
+[1m── Check 3 — Conflicting sysctl Overrides ──[0m
+[0;36m[INFO][0m  Audit  : checking all sysctl sources for conflicting kernel.randomize_va_space values
+
+[0;32m[PASS][0m  No conflicting kernel.randomize_va_space values found in other sysctl files.
+
+[1m── Check 4 — ASLR Entropy Verification ──[0m
+[0;36m[INFO][0m  Audit  : checking mmap and stack entropy bits
+
+[0;32m[PASS][0m  mmap entropy bits : 28 (good — >= 28 bits)
+[0;36m[INFO][0m  mmap compat entropy bits : 8 (for 32-bit processes)
+
+[1m── Final State Verification ──[0m
+
+  [1mkernel.randomize_va_space (runtime)       [0m 2
+  [1mPersistence file present                  [0m yes (/etc/sysctl.d/61-aslr-hardening.conf)
+
+[0;32m[PASS][0m  kernel.randomize_va_space = 2 — Full ASLR active ✓
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 06_aslr — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 07_disable_legacy_sockets.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m      Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Starting Legacy Socket Audit ──[0m
+[0;36m[INFO][0m      Sockets to audit : 7
+
+
+[1m── Character Generator (UDP)  [chargen-dgram.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status chargen-dgram.socket
+        [2mPort 19/UDP — RFC 864[0m
+
+[2m[NOT FOUND][0m chargen-dgram.socket — unit not found on this system (package not installed).
+
+
+[1m── Character Generator (TCP)  [chargen-stream.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status chargen-stream.socket
+        [2mPort 19/TCP — RFC 864[0m
+
+[2m[NOT FOUND][0m chargen-stream.socket — unit not found on this system (package not installed).
+
+
+[1m── Daytime Protocol (UDP)  [daytime-dgram.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status daytime-dgram.socket
+        [2mPort 13/UDP — RFC 867[0m
+
+[2m[NOT FOUND][0m daytime-dgram.socket — unit not found on this system (package not installed).
+
+
+[1m── Daytime Protocol (TCP)  [daytime-stream.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status daytime-stream.socket
+        [2mPort 13/TCP — RFC 867[0m
+
+[2m[NOT FOUND][0m daytime-stream.socket — unit not found on this system (package not installed).
+
+
+[1m── Echo Protocol (UDP)  [echo-dgram.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status echo-dgram.socket
+        [2mPort 7/UDP — RFC 862[0m
+
+[2m[NOT FOUND][0m echo-dgram.socket — unit not found on this system (package not installed).
+
+
+[1m── Echo Protocol (TCP)  [echo-stream.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status echo-stream.socket
+        [2mPort 7/TCP — RFC 862[0m
+
+[2m[NOT FOUND][0m echo-stream.socket — unit not found on this system (package not installed).
+
+
+[1m── TCP Port Multiplexer  [tcpmux-server.socket] ──[0m
+[0;36m[INFO][0m      Audit  : systemctl status tcpmux-server.socket
+        [2mPort 1/TCP — RFC 1078[0m
+
+[2m[NOT FOUND][0m tcpmux-server.socket — unit not found on this system (package not installed).
+
+[1m── xinetd Config Check (belt-and-suspenders) ──[0m
+[0;36m[INFO][0m      Audit  : checking /etc/xinetd.d/ for enabled legacy services
+
+[0;32m[PASS][0m      /etc/xinetd.d does not exist — xinetd not configured.
+
+
+[1m╔══════════════════════════════════════════════════════════════════════╗[0m
+[1m║         LEGACY SOCKET SERVICE SUMMARY                               ║[0m
+[1m╠══════════════════════════════════╦═══════════╦═══════╦══════════════╣[0m
+[1m║  SOCKET UNIT                    ║ PROTOCOL  ║ PORT  ║ STATUS       ║[0m
+[1m╠══════════════════════════════════╬═══════════╬═══════╬══════════════╣[0m
+║  chargen-dgram.socket           ║ UDP       ║ 19    ║ NOT_FOUND ║
+║  chargen-stream.socket          ║ TCP       ║ 19    ║ NOT_FOUND ║
+║  daytime-dgram.socket           ║ UDP       ║ 13    ║ NOT_FOUND ║
+║  daytime-stream.socket          ║ TCP       ║ 13    ║ NOT_FOUND ║
+║  echo-dgram.socket              ║ UDP       ║ 7     ║ NOT_FOUND ║
+║  echo-stream.socket             ║ TCP       ║ 7     ║ NOT_FOUND ║
+║  tcpmux-server.socket           ║ TCP       ║ 1     ║ NOT_FOUND ║
+[1m╠══════════════════════════════════╩═══════════╩═══════╩══════════════╣[0m
+[1m║  Total audited   : 7                                                  ║[0m
+║  Not found       : 7                                                  ║
+║  Already clean   : 0                                                  ║
+[0;32m[1m║  Disabled now    : 0                                                  ║[0m
+║  Failed          : 0                                                  ║
+[1m╚══════════════════════════════════════════════════════════════════════╝[0m
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m      Module 07_disable_legacy_sockets — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 08_ntp.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── NTP Implementation Detection ──[0m
+[0;36m[INFO][0m  chrony  installed : yes
+[0;36m[INFO][0m  chrony  active    : active
+[0;36m[INFO][0m  ntp     installed : no
+[0;36m[INFO][0m  ntpd    active    : inactive
+inactive
+
+[0;36m[INFO][0m  Using chrony path (preferred for RHEL/Rocky 9)
+
+[1m── Chrony — Package & Service ──[0m
+[0;36m[INFO][0m  Audit  : rpm -q chrony
+[0;32m[PASS][0m  chrony is installed (4.6.1-1.el9).
+[0;36m[INFO][0m  Audit  : systemctl is-enabled chronyd / systemctl is-active chronyd
+[0;32m[PASS][0m  chronyd is enabled.
+[0;32m[PASS][0m  chronyd is active.
+
+[1m── Chrony — Configuration File ──[0m
+[0;36m[INFO][0m  Audit  : /etc/chrony.conf
+[0;32m[PASS][0m  /etc/chrony.conf exists.
+
+[1m── Chrony — NTP Server Entries ──[0m
+[0;36m[INFO][0m  Audit  : grep -E '^(server|pool)' /etc/chrony.conf
+
+[0;32m[PASS][0m  NTP server/pool entries found in /etc/chrony.conf:
+        pool 2.rocky.pool.ntp.org iburst
+
+[1m── Chrony — makestep Directive ──[0m
+[0;36m[INFO][0m  Audit  : grep 'makestep' /etc/chrony.conf
+[0;32m[PASS][0m  makestep is configured : makestep 1.0 3
+
+[1m── Chrony — Running as Unprivileged User ──[0m
+[0;36m[INFO][0m  Audit  : ps -ef | grep chronyd
+
+[0;36m[INFO][0m  chronyd process user : chrony
+[0;32m[PASS][0m  chronyd is running as unprivileged user 'chrony'.
+
+[1m── Chrony — noclientlog Directive ──[0m
+[0;36m[INFO][0m  Audit  : grep 'noclientlog' /etc/chrony.conf
+[0;33m[WARN][0m  noclientlog not set — adding it as best practice ...
+[0;32m[PASS][0m  noclientlog added to /etc/chrony.conf.
+
+[1m── Chrony — Apply Configuration ──[0m
+[0;32m[PASS][0m  chronyd reloaded with updated configuration.
+
+[1m── Chrony — Sync Status ──[0m
+[0;36m[INFO][0m  Running: chronyc tracking
+
+        Reference ID    : 00000000 ()
+        Stratum         : 0
+        Ref time (UTC)  : Thu Jan 01 00:00:00 1970
+        System time     : 0.000000000 seconds slow of NTP time
+        Last offset     : +0.000000000 seconds
+        RMS offset      : 0.000000000 seconds
+        Frequency       : 9.128 ppm slow
+        Residual freq   : +0.000 ppm
+        Skew            : 0.000 ppm
+        Root delay      : 1.000000000 seconds
+        Root dispersion : 1.000000000 seconds
+        Update interval : 0.0 seconds
+        Leap status     : Not synchronised
+
+[0;36m[INFO][0m  NTP sources:
+        
+          .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
+         / .- Source state '*' = current best, '+' = combined, '-' = not combined,
+        | /             'x' = may be in error, '~' = too variable, '?' = unusable.
+        ||                                                 .- xxxx [ yyyy ] +/- zzzz
+        ||      Reachability register (octal) -.           |  xxxx = adjusted offset,
+        ||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
+        ||                                \     |          |  zzzz = estimated error.
+        ||                                 |    |           \
+        MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+        ===============================================================================
+
+[1m── Final NTP State ──[0m
+
+  [1mImplementation                     [0m chrony
+  [1mchronyd active                     [0m active
+  [1mchronyd enabled                    [0m enabled
+  [1mConfig file                        [0m /etc/chrony.conf
+
+[0;36m[INFO][0m  To verify time synchronisation:
+        [2mchronyc tracking[0m
+        [2mchronyc sources -v[0m
+        [2mtimedatectl show[0m
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 08_ntp — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 09_sysctl_network.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Starting Network Parameter Audit (16 parameters) ──[0m
+
+
+[1m── Disable IP Forwarding ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.ip_forward
+[0;36m[INFO][0m  Expect : net.ipv4.ip_forward = 0
+        [2mPrevents the host acting as a router. A server should never forward packets between interfaces unless it is a designated gateway.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.ip_forward = 1
+[0;31m[FAIL][0m  net.ipv4.ip_forward = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.ip_forward=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.ip_forward = 0
+
+
+[1m── Disable Send Packet Redirects (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.send_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.send_redirects = 0
+        [2mICMP redirects sent to other hosts can be used to alter their routing tables. Only a router should send them.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.send_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.all.send_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.all.send_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.all.send_redirects = 0
+
+
+[1m── Disable Send Packet Redirects (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.send_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.send_redirects = 0
+        [2mApplies the restriction to interfaces that do not have an explicit setting.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.send_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.default.send_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.default.send_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.default.send_redirects = 0
+
+
+[1m── Disable Source Routed Packet Acceptance (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.accept_source_route
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.accept_source_route = 0
+        [2mSource routing lets an attacker dictate the path a packet takes, bypassing firewalls.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.accept_source_route = 0
+[0;32m[PASS][0m  net.ipv4.conf.all.accept_source_route = 0 ✓
+
+
+[1m── Disable Source Routed Packet Acceptance (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.accept_source_route
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.accept_source_route = 0
+        [2mApplies to new interfaces that inherit the default policy.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.accept_source_route = 0
+[0;32m[PASS][0m  net.ipv4.conf.default.accept_source_route = 0 ✓
+
+
+[1m── Disable ICMP Redirect Acceptance (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.accept_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.accept_redirects = 0
+        [2mAccepting ICMP redirects allows a remote host to alter the system routing table — classic MITM vector.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.accept_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.all.accept_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.all.accept_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.all.accept_redirects = 0
+
+
+[1m── Disable ICMP Redirect Acceptance (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.accept_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.accept_redirects = 0
+        [2mCovers interfaces not explicitly configured.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.accept_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.default.accept_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.default.accept_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.default.accept_redirects = 0
+
+
+[1m── Disable Secure ICMP Redirect Acceptance (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.secure_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.secure_redirects = 0
+        [2m'Secure' redirects only accepted from listed gateways — still exploitable if the gateway is compromised.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.secure_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.all.secure_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.all.secure_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.all.secure_redirects = 0
+
+
+[1m── Disable Secure ICMP Redirect Acceptance (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.secure_redirects
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.secure_redirects = 0
+        [2mApplies the same restriction to the default interface policy.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.secure_redirects = 1
+[0;31m[FAIL][0m  net.ipv4.conf.default.secure_redirects = 1 (expected 0)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.default.secure_redirects=0
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.default.secure_redirects = 0
+
+
+[1m── Log Suspicious Packets — log_martians (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.log_martians
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.log_martians = 1
+        [2mLogs packets with impossible source addresses (martians). Essential for detecting spoofing attempts.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.log_martians = 0
+[0;31m[FAIL][0m  net.ipv4.conf.all.log_martians = 0 (expected 1)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.all.log_martians=1
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.all.log_martians = 1
+
+
+[1m── Log Suspicious Packets — log_martians (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.log_martians
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.log_martians = 1
+        [2mEnsures martian logging applies to new interfaces at bring-up.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.log_martians = 0
+[0;31m[FAIL][0m  net.ipv4.conf.default.log_martians = 0 (expected 1)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.default.log_martians=1
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.default.log_martians = 1
+
+
+[1m── Enable Ignore Broadcast Requests ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.icmp_echo_ignore_broadcasts
+[0;36m[INFO][0m  Expect : net.ipv4.icmp_echo_ignore_broadcasts = 1
+        [2mPrevents Smurf DDoS attacks where broadcast ping is used to amplify traffic toward a victim.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.icmp_echo_ignore_broadcasts = 1
+[0;32m[PASS][0m  net.ipv4.icmp_echo_ignore_broadcasts = 1 ✓
+
+
+[1m── Enable Bad Error Message Protection ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.icmp_ignore_bogus_error_responses
+[0;36m[INFO][0m  Expect : net.ipv4.icmp_ignore_bogus_error_responses = 1
+        [2mIgnores invalid ICMP error responses that violate RFC 1122 — reduces noise and potential DoS.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.icmp_ignore_bogus_error_responses = 1
+[0;32m[PASS][0m  net.ipv4.icmp_ignore_bogus_error_responses = 1 ✓
+
+
+[1m── Enable RFC Source Route Validation — rp_filter (all) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.all.rp_filter
+[0;36m[INFO][0m  Expect : net.ipv4.conf.all.rp_filter = 1
+        [2mReverse path filtering drops packets whose source address is not reachable via the interface they arrived on. Prevents IP spoofing.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.all.rp_filter = 0
+[0;31m[FAIL][0m  net.ipv4.conf.all.rp_filter = 0 (expected 1)
+[0;36m[INFO][0m  Remediation: sysctl -w net.ipv4.conf.all.rp_filter=1
+[0;32m[PASS][0m  Runtime value updated : net.ipv4.conf.all.rp_filter = 1
+
+
+[1m── Enable RFC Source Route Validation — rp_filter (default) ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.conf.default.rp_filter
+[0;36m[INFO][0m  Expect : net.ipv4.conf.default.rp_filter = 1
+        [2mApplies strict RPF to new interfaces when they come up.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.conf.default.rp_filter = 1
+[0;32m[PASS][0m  net.ipv4.conf.default.rp_filter = 1 ✓
+
+
+[1m── Enable TCP SYN Cookies ──[0m
+[0;36m[INFO][0m  Audit  : /sbin/sysctl net.ipv4.tcp_syncookies
+[0;36m[INFO][0m  Expect : net.ipv4.tcp_syncookies = 1
+        [2mSYN cookies protect against SYN flood attacks by encoding connection state in the ISN, removing the need for a listen backlog entry until the handshake completes.[0m
+
+[0;36m[INFO][0m  Current : net.ipv4.tcp_syncookies = 1
+[0;32m[PASS][0m  net.ipv4.tcp_syncookies = 1 ✓
+
+[1m── Persisting Settings to /etc/sysctl.d/62-network-hardening.conf ──[0m
+[0;36m[INFO][0m  Writing all 16 parameters to drop-in file ...
+
+[0;32m[PASS][0m  All parameters applied from /etc/sysctl.d/62-network-hardening.conf
+
+[1m── Conflicting sysctl Override Scan ──[0m
+[0;36m[INFO][0m  Scanning /etc/sysctl.conf and /etc/sysctl.d/*.conf for conflicts ...
+
+[0;32m[PASS][0m  No conflicting overrides found in other sysctl files.
+
+[1m── CIS Audit Verification (post-remediation) ──[0m
+[0;36m[INFO][0m  Re-running /sbin/sysctl for all parameters ...
+
+  [1mPARAMETER                                           EXPECTED    FOUND       STATUS    [0m
+  ──────────────────────────────────────────────────────────────────────────────────────────
+  net.ipv4.ip_forward                                 0           0           [0;32mPASS[0m
+  net.ipv4.conf.all.send_redirects                    0           0           [0;32mPASS[0m
+  net.ipv4.conf.default.send_redirects                0           0           [0;32mPASS[0m
+  net.ipv4.conf.all.accept_source_route               0           0           [0;32mPASS[0m
+  net.ipv4.conf.default.accept_source_route           0           0           [0;32mPASS[0m
+  net.ipv4.conf.all.accept_redirects                  0           0           [0;32mPASS[0m
+  net.ipv4.conf.default.accept_redirects              0           0           [0;32mPASS[0m
+  net.ipv4.conf.all.secure_redirects                  0           0           [0;32mPASS[0m
+  net.ipv4.conf.default.secure_redirects              0           0           [0;32mPASS[0m
+  net.ipv4.conf.all.log_martians                      1           1           [0;32mPASS[0m
+  net.ipv4.conf.default.log_martians                  1           1           [0;32mPASS[0m
+  net.ipv4.icmp_echo_ignore_broadcasts                1           1           [0;32mPASS[0m
+  net.ipv4.icmp_ignore_bogus_error_responses          1           1           [0;32mPASS[0m
+  net.ipv4.conf.all.rp_filter                         1           1           [0;32mPASS[0m
+  net.ipv4.conf.default.rp_filter                     1           1           [0;32mPASS[0m
+  net.ipv4.tcp_syncookies                             1           1           [0;32mPASS[0m
+
+  ──────────────────────────────────────────────────────────────────────────────────────────
+  [0;32m[1mPASS: 16 [0m   [0;31m[1mFAIL: 0  [0m
+
+[1m── Run Summary ──[0m
+
+  [1mTotal parameters audited           [0m 16
+  [0;32mAlready compliant                  [0m 6
+  [0;32mRemediated this run                [0m 10
+  [1mPersistence file                   [0m /etc/sysctl.d/62-network-hardening.conf
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 09_sysctl_network — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 10_cron_anacron.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+
+[1m── Check 1 — cronie-anacron Package ──[0m
+[0;36m[INFO][0m  Audit  : rpm -q cronie-anacron
+
+[0;32m[PASS][0m  cronie-anacron is installed : cronie-anacron-1.5.7-14.el9_6.x86_64
+
+[1m── Check 2 — crond Service ──[0m
+[0;36m[INFO][0m  Audit  : systemctl is-enabled crond / systemctl is-active crond
+
+[0;36m[INFO][0m  crond enabled : enabled
+[0;36m[INFO][0m  crond active  : active
+
+[0;32m[PASS][0m  crond is enabled (will start on boot).
+[0;32m[PASS][0m  crond is active (running).
+
+
+[1m── Check 3  — /etc/anacrontab ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/anacrontab | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 644 0 0
+[0;31m[FAIL][0m  /etc/anacrontab — current: 644 0:0
+[0;33m[WARN][0m    Permissions : 644 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 600 /etc/anacrontab
+[0;36m[INFO][0m    Permissions set to 600.
+
+[0;36m[INFO][0m  Post-remediation : 600 0 0
+[0;32m[PASS][0m  /etc/anacrontab — remediated to 600 root:root ✓
+
+
+[1m── Check 4  — /etc/crontab ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/crontab | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 644 0 0
+[0;31m[FAIL][0m  /etc/crontab — current: 644 0:0
+[0;33m[WARN][0m    Permissions : 644 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 600 /etc/crontab
+[0;36m[INFO][0m    Permissions set to 600.
+
+[0;36m[INFO][0m  Post-remediation : 600 0 0
+[0;32m[PASS][0m  /etc/crontab — remediated to 600 root:root ✓
+
+
+[1m── Check 5  — /etc/cron.hourly ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/cron.hourly | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 755 0 0
+[0;31m[FAIL][0m  /etc/cron.hourly — current: 755 0:0
+[0;33m[WARN][0m    Permissions : 755 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 700 /etc/cron.hourly
+[0;36m[INFO][0m    Permissions set to 700.
+
+[0;36m[INFO][0m  Post-remediation : 700 0 0
+[0;32m[PASS][0m  /etc/cron.hourly — remediated to 700 root:root ✓
+
+
+[1m── Check 6  — /etc/cron.daily ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/cron.daily | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 755 0 0
+[0;31m[FAIL][0m  /etc/cron.daily — current: 755 0:0
+[0;33m[WARN][0m    Permissions : 755 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 700 /etc/cron.daily
+[0;36m[INFO][0m    Permissions set to 700.
+
+[0;36m[INFO][0m  Post-remediation : 700 0 0
+[0;32m[PASS][0m  /etc/cron.daily — remediated to 700 root:root ✓
+
+
+[1m── Check 7  — /etc/cron.weekly ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/cron.weekly | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 755 0 0
+[0;31m[FAIL][0m  /etc/cron.weekly — current: 755 0:0
+[0;33m[WARN][0m    Permissions : 755 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 700 /etc/cron.weekly
+[0;36m[INFO][0m    Permissions set to 700.
+
+[0;36m[INFO][0m  Post-remediation : 700 0 0
+[0;32m[PASS][0m  /etc/cron.weekly — remediated to 700 root:root ✓
+
+
+[1m── Check 8  — /etc/cron.monthly ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/cron.monthly | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 755 0 0
+[0;31m[FAIL][0m  /etc/cron.monthly — current: 755 0:0
+[0;33m[WARN][0m    Permissions : 755 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 700 /etc/cron.monthly
+[0;36m[INFO][0m    Permissions set to 700.
+
+[0;36m[INFO][0m  Post-remediation : 700 0 0
+[0;32m[PASS][0m  /etc/cron.monthly — remediated to 700 root:root ✓
+
+
+[1m── Check 9  — /etc/cron.d ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/cron.d | egrep ".00 0 0"
+
+[0;36m[INFO][0m  stat output : 755 0 0
+[0;31m[FAIL][0m  /etc/cron.d — current: 755 0:0
+[0;33m[WARN][0m    Permissions : 755 (expected pattern ?00 — no group/other bits)
+[0;36m[INFO][0m  Remediation:
+[0;36m[INFO][0m    chmod 700 /etc/cron.d
+[0;36m[INFO][0m    Permissions set to 700.
+
+[0;36m[INFO][0m  Post-remediation : 700 0 0
+[0;32m[PASS][0m  /etc/cron.d — remediated to 700 root:root ✓
+
+[1m── Check 10 — cron Access Control (cron.allow / cron.deny) ──[0m
+[0;36m[INFO][0m  Restricting cron usage to authorised users only.
+
+[0;36m[INFO][0m  /etc/cron.deny exists but is empty — removing for cleanliness ...
+[0;32m[PASS][0m  /etc/cron.deny removed.
+[0;36m[INFO][0m  /etc/cron.allow does not exist — creating with root-only access ...
+[0;32m[PASS][0m  /etc/cron.allow created with root-only access.
+[0;32m[PASS][0m  /etc/cron.allow — 600 0 0 ✓
+
+
+[1m╔══════════════════════════════════════════════════════════════════╗[0m
+[1m║           CRON / ANACRON HARDENING SUMMARY                      ║[0m
+[1m╠════════════════════════════╦═══════════╦═══════╦════════════════╣[0m
+[1m║  PATH                       ║ TYPE      ║ PERM  ║ STATUS         ║[0m
+[1m╠════════════════════════════╬═══════════╬═══════╬════════════════╣[0m
+║  /etc/anacrontab            ║ file      ║ 600   ║ REMEDIATED     ║
+║  /etc/crontab               ║ file      ║ 600   ║ REMEDIATED     ║
+║  /etc/cron.hourly           ║ dir       ║ 700   ║ REMEDIATED     ║
+║  /etc/cron.daily            ║ dir       ║ 700   ║ REMEDIATED     ║
+║  /etc/cron.weekly           ║ dir       ║ 700   ║ REMEDIATED     ║
+║  /etc/cron.monthly          ║ dir       ║ 700   ║ REMEDIATED     ║
+║  /etc/cron.d                ║ dir       ║ 700   ║ REMEDIATED     ║
+║  /etc/cron.allow            ║ file      ║ 600   ║ PASS           ║
+[1m╠════════════════════════════╩═══════════╩═══════╩════════════════╣[0m
+[1m║  Total paths audited  : 8                                         ║[0m
+║  Already compliant    : 1                                         ║
+[0;32m[1m║  Remediated           : 7                                         ║[0m
+[0;32m[1m║  Created              : 0                                         ║[0m
+║  Failed               : 0                                         ║
+[1m╚══════════════════════════════════════════════════════════════════╝[0m
+
+[0;36m[INFO][0m  crond service status :
+        [2msystemctl status crond[0m
+[0;36m[INFO][0m  View scheduled jobs  :
+        [2mcrontab -l -u root[0m
+        [2mcat /etc/crontab[0m
+        [2mls -la /etc/cron.d/[0m
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 10_cron_anacron — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+MODULE : 11_sshd_config.sh
+STATUS : PASS
+STDOUT :
+[1m── OS Detection ──[0m
+[0;36m[INFO][0m  Detected OS : Rocky Linux 9.7 (Blue Onyx)
+[0;36m[INFO][0m  openssh-server installed ✓
+[0;36m[INFO][0m  sshd_config path : /etc/ssh/sshd_config
+
+[1m── Check 1 — SSH Protocol Version ──[0m
+[0;36m[INFO][0m  Audit  : grep "^Protocol" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : Protocol 2
+
+[0;36m[INFO][0m  Found  : [not set]
+
+[0;36m[INFO][0m  OpenSSH version : 8.7
+[0;36m[INFO][0m  Protocol keyword absent — OpenSSH 7.4+ enforces SSHv2 by default.
+[0;36m[INFO][0m  Setting Protocol 2 explicitly for audit compliance ...
+[0;36m[INFO][0m  Backup created : /etc/ssh/sshd_config.bak.20260416105043
+[0;32m[PASS][0m  Protocol 2 set.
+
+[1m── Check 2 — SSH LogLevel ──[0m
+[0;36m[INFO][0m  Audit  : grep "^LogLevel" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : LogLevel INFO
+
+[0;36m[INFO][0m  Found  : [not set]
+
+[0;31m[FAIL][0m  LogLevel is not set (defaults to INFO but must be explicit per CIS).
+[0;36m[INFO][0m  Remediation: Setting LogLevel INFO ...
+[0;32m[PASS][0m  LogLevel INFO set.
+
+[1m── Check 3 — /etc/ssh/sshd_config Permissions ──[0m
+[0;36m[INFO][0m  Audit  : stat -L -c "%a %u %g" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : 600 0 0  (CIS shows 644, this module uses 600 — more restrictive)
+
+[0;36m[INFO][0m  Current : 600 uid=0 gid=0
+
+[0;32m[PASS][0m  /etc/ssh/sshd_config — 600 root:root ✓
+
+[1m── Check 4 — X11Forwarding Disabled ──[0m
+[0;36m[INFO][0m  Audit  : grep "^X11Forwarding" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : X11Forwarding no
+
+[0;36m[INFO][0m  Found  : X11Forwarding no
+X11Forwarding no
+
+[0;32m[PASS][0m  X11Forwarding no is set.
+
+[1m── Check 5 — MaxAuthTries <= 4 ──[0m
+[0;36m[INFO][0m  Audit  : grep "^MaxAuthTries" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : MaxAuthTries 4
+
+[0;36m[INFO][0m  Found  : MaxAuthTries 4
+
+[0;32m[PASS][0m  MaxAuthTries is 4 (<=4) ✓
+
+[1m── Check 6 — IgnoreRhosts ──[0m
+[0;36m[INFO][0m  Audit  : grep "^IgnoreRhosts" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : IgnoreRhosts yes
+
+[0;36m[INFO][0m  Found  : [not set (default: yes)]
+
+[0;32m[PASS][0m  IgnoreRhosts yes (set or defaulted) ✓
+[0;36m[INFO][0m  Setting explicitly for audit compliance ...
+[0;32m[PASS][0m  IgnoreRhosts yes set explicitly.
+
+[1m── Check 7 — HostbasedAuthentication ──[0m
+[0;36m[INFO][0m  Audit  : grep "^HostbasedAuthentication" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : HostbasedAuthentication no
+
+[0;36m[INFO][0m  Found  : [not set (default: no)]
+
+[0;32m[PASS][0m  HostbasedAuthentication no (set or defaulted) ✓
+[0;32m[PASS][0m  HostbasedAuthentication no set explicitly.
+
+[1m── Check 8 — PermitEmptyPasswords ──[0m
+[0;36m[INFO][0m  Audit  : grep "^PermitEmptyPasswords" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : PermitEmptyPasswords no
+
+[0;36m[INFO][0m  Found  : [not set (default: no)]
+
+[0;32m[PASS][0m  PermitEmptyPasswords no (set or defaulted) ✓
+[0;32m[PASS][0m  PermitEmptyPasswords no set explicitly.
+
+[1m── Check 9 — PermitUserEnvironment ──[0m
+[0;36m[INFO][0m  Audit  : grep "PermitUserEnvironment" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : PermitUserEnvironment no
+
+[0;36m[INFO][0m  Found  : #PermitUserEnvironment no
+
+[0;32m[PASS][0m  PermitUserEnvironment no (set or defaulted) ✓
+
+[1m── Check 10 — Approved Ciphers (CTR mode) ──[0m
+[0;36m[INFO][0m  Audit  : grep "Ciphers" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+
+[0;36m[INFO][0m  Found  : Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+
+[0;31m[FAIL][0m  Weak ciphers found in config : aes128-gcm aes256-gcm
+        [2mRisk: CBC-mode ciphers are vulnerable to BEAST and Lucky13 attacks.[0m
+        [2m      arcfour/RC4 is broken. CTR mode ciphers are required.[0m
+[0;36m[INFO][0m  Remediation: Setting Ciphers to CTR-mode only ...
+[0;32m[PASS][0m  Ciphers set to aes128-ctr,aes192-ctr,aes256-ctr
+
+[1m── Check 11 — Idle Timeout (ClientAliveInterval) ──[0m
+[0;36m[INFO][0m  Audit  : grep "^ClientAliveInterval" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : ClientAliveInterval 900
+
+[0;36m[INFO][0m  Found  : ClientAliveInterval 300
+
+[0;32m[PASS][0m  ClientAliveInterval is 300s (>0, <=900) ✓
+
+[1m── Check 12 — Login Warning Banner ──[0m
+[0;36m[INFO][0m  Audit  : grep "^Banner" /etc/ssh/sshd_config
+[0;36m[INFO][0m  Expect : Banner /etc/issue.net
+
+[0;36m[INFO][0m  Found  : Banner /etc/issue.net
+
+[0;32m[PASS][0m  /etc/issue.net exists and is non-empty ✓
+[0;36m[INFO][0m  Banner content preview:
+        *******************************************************************************
+                                    AUTHORISED ACCESS ONLY
+        This system is for authorised users only. All activity may be monitored and
+        ...
+
+[0;32m[PASS][0m  Banner is set to /etc/issue.net ✓
+
+[1m── Configuration Validation & Reload ──[0m
+[0;36m[INFO][0m  Changes were made to /etc/ssh/sshd_config — validating syntax ...
+
+[0;32m[PASS][0m  sshd -t config syntax test PASSED.
+[0;36m[INFO][0m  Reloading sshd to apply changes ...
+[0;32m[PASS][0m  sshd reloaded successfully.
+
+[1m── CIS Audit Verification (post-remediation) ──[0m
+[0;36m[INFO][0m  Re-running all CIS grep audit commands ...
+
+  [1mKEYWORD                       VALUE IN SSHD_CONFIG                    [0m
+  ────────────────────────────────────────────────────────────────────────
+  Protocol                      Protocol 2
+  LogLevel                      LogLevel INFO
+  X11Forwarding                 X11Forwarding no
+  MaxAuthTries                  MaxAuthTries 4
+  IgnoreRhosts                  IgnoreRhosts yes
+  HostbasedAuthentication       HostbasedAuthentication no
+  PermitEmptyPasswords          PermitEmptyPasswords no
+  PermitUserEnvironment         
+[not set]
+  Ciphers                       Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+  ClientAliveInterval           ClientAliveInterval 300
+  Banner                        Banner /etc/issue.net
+
+[1m── Run Summary ──[0m
+
+  [1mTotal checks                       [0m 12
+  [0;32m[1mAlready compliant                  [0m 9
+  [0;32m[1mRemediated this run                [0m 3
+  [1mConfig file                        [0m /etc/ssh/sshd_config
+  [1mBanner file                        [0m /etc/issue.net
+
+──────────────────────────────────────────────────────
+[0;32m[PASS][0m  Module 11_sshd_config — ALL CHECKS PASSED
+
+────────────────────────────────────────────────────────────
+Done.
