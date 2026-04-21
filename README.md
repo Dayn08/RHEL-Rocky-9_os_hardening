@@ -1,6 +1,6 @@
 # RHEL/Rocky 9 OS Hardening
 
-Automated CIS benchmark audit and hardening framework for **RHEL 9 / Rocky Linux 9**.
+Automated CIS benchmark hardening framework for **RHEL 9 / Rocky Linux 9**.
 
 This project helps system administrators audit, remediate, and validate server hardening settings based on CIS-aligned best practices.
 
